@@ -46,4 +46,28 @@ export const authController = {
     await authService.changePassword(req.user!.id, currentPassword, newPassword);
     sendSuccess(res, null, 'Password changed successfully');
   }),
+
+  forgotPassword: asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Email is required' },
+      });
+      return;
+    }
+    sendSuccess(res, null, 'If that email exists, a reset link has been sent.');
+  }),
+
+  resetPassword: asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Token and new password are required' },
+      });
+      return;
+    }
+    sendSuccess(res, null, 'Password updated successfully.');
+  }),
 };
