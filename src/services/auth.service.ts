@@ -9,11 +9,45 @@ export const authService = {
       where: { email: data.email },
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.password) {
       throw new ConflictError('Email already registered');
     }
 
     const hashedPassword = await hashPassword(data.password);
+
+    if (existingUser && !existingUser.password) {
+      const user = await prisma.user.update({
+        where: { email: data.email },
+        data: {
+          name: data.name,
+          password: hashedPassword,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          organizationId: true,
+        },
+      });
+
+      const tokens = generateTokenPair({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      await prisma.session.create({
+        data: {
+          userId: user.id,
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      logger.info(`User activated account: ${user.email}`);
+      return { user, tokens };
+    }
 
     let organization;
     if (data.organizationName) {
@@ -54,7 +88,6 @@ export const authService = {
     });
 
     logger.info(`User registered: ${user.email}`);
-
     return { user, tokens };
   },
 
