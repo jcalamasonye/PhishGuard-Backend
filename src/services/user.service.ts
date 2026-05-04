@@ -80,13 +80,11 @@ export const userService = {
       throw new ConflictError('Email already exists');
     }
 
-    const defaultPassword = await hashPassword('Password123!');
-
-    const user = await prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: defaultPassword,
+  const user = await prisma.user.create({
+  data: {
+    name: data.name,
+    email: data.email,
+    password: '',
         department: data.department,
         role: (data.role as any) || 'USER',
         organizationId: data.organizationId,
@@ -128,15 +126,13 @@ export const userService = {
   },
 
   async bulkCreate(users: Array<{ name: string; email: string; department?: string }>, organizationId?: string) {
-    const defaultPassword = await hashPassword('Password123!');
-
     const createdUsers = await prisma.$transaction(
-      users.map((user) =>
-        prisma.user.create({
-          data: {
-            name: user.name,
-            email: user.email,
-            password: defaultPassword,
+  users.map((user) =>
+    prisma.user.create({
+      data: {
+        name: user.name,
+        email: user.email,
+        password: '',
             department: user.department,
             organizationId,
           },
