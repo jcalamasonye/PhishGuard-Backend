@@ -5,32 +5,31 @@ import logger from '../utils/logger';
 
 export const authService = {
   async register(data: { name: string; email: string; password: string; organizationName?: string }) {
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+   const existingUser = await prisma.user.findUnique({
+  where: { email: data.email },
+});
 
-    if (existingUser && existingUser.password) {
-      throw new ConflictError('Email already registered');
-    }
+if (existingUser && existingUser.password && existingUser.password !== '') {
+  throw new ConflictError('Email already registered');
+}
 
-    const hashedPassword = await hashPassword(data.password);
+const hashedPassword = await hashPassword(data.password);
 
-    if (existingUser && !existingUser.password) {
-      const user = await prisma.user.update({
-        where: { email: data.email },
-        data: {
-          name: data.name,
-          password: hashedPassword,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          organizationId: true,
-        },
-      });
-
+if (existingUser && (!existingUser.password || existingUser.password === '')) {
+  const user = await prisma.user.update({
+    where: { email: data.email },
+    data: {
+      name: data.name,
+      password: hashedPassword,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      organizationId: true,
+    },
+  });
       const tokens = generateTokenPair({
         userId: user.id,
         email: user.email,
